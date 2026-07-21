@@ -10,6 +10,7 @@ namespace BasketService.Tests.Application.Carts.Commands.RemoveCartItem;
 public class RemoveCartItemCommandHandlerTests
 {
     private readonly Mock<ICartRepository> _cartRepository = new();
+    private readonly Mock<ICartCache> _cartCache = new();
     private readonly Mock<IAuthenticationContext> _authenticationContext = new();
 
     [Fact]
@@ -28,7 +29,7 @@ public class RemoveCartItemCommandHandlerTests
             .Setup(repository => repository.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cart);
 
-        var handler = new RemoveCartItemCommandHandler(_cartRepository.Object, _authenticationContext.Object);
+        var handler = new RemoveCartItemCommandHandler(_cartRepository.Object, _cartCache.Object, _authenticationContext.Object);
 
         var result = await handler.Handle(new RemoveCartItemCommand
         {
@@ -41,6 +42,7 @@ public class RemoveCartItemCommandHandlerTests
         Assert.Equal(40m, success.Value.Total);
         _cartRepository.Verify(repository => repository.UpdateAsync(cart, It.IsAny<CancellationToken>()), Times.Once);
         _cartRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _cartCache.Verify(cache => cache.RemoveAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -54,7 +56,7 @@ public class RemoveCartItemCommandHandlerTests
             .Setup(repository => repository.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cart);
 
-        var handler = new RemoveCartItemCommandHandler(_cartRepository.Object, _authenticationContext.Object);
+        var handler = new RemoveCartItemCommandHandler(_cartRepository.Object, _cartCache.Object, _authenticationContext.Object);
 
         var result = await handler.Handle(new RemoveCartItemCommand
         {

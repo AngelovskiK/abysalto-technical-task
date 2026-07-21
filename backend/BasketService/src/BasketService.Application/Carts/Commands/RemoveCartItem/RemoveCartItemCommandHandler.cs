@@ -9,11 +9,13 @@ namespace BasketService.Application.Carts.Commands.RemoveCartItem;
 public sealed class RemoveCartItemCommandHandler : ICommandHandler<RemoveCartItemCommand, Result<CartResponse>>
 {
     private readonly ICartRepository _cartRepository;
+    private readonly ICartCache _cartCache;
     private readonly IAuthenticationContext _authenticationContext;
 
-    public RemoveCartItemCommandHandler(ICartRepository cartRepository, IAuthenticationContext authenticationContext)
+    public RemoveCartItemCommandHandler(ICartRepository cartRepository, ICartCache cartCache, IAuthenticationContext authenticationContext)
     {
         _cartRepository = cartRepository;
+        _cartCache = cartCache;
         _authenticationContext = authenticationContext;
     }
 
@@ -39,6 +41,7 @@ public sealed class RemoveCartItemCommandHandler : ICommandHandler<RemoveCartIte
         cart.RemoveItem(command.CartItemId);
         await _cartRepository.UpdateAsync(cart, cancellationToken);
         await _cartRepository.SaveChangesAsync(cancellationToken);
+        await _cartCache.RemoveAsync(userId, cancellationToken);
 
         return new CartResponse(cart);
     }

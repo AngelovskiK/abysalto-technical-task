@@ -10,6 +10,7 @@ namespace BasketService.Tests.Application.Carts.Commands;
 public class AddCartItemCommandHandlerTests
 {
     private readonly Mock<ICartRepository> _cartRepository = new();
+    private readonly Mock<ICartCache> _cartCache = new();
     private readonly Mock<IAuthenticationContext> _authenticationContext = new();
 
     [Fact]
@@ -57,8 +58,9 @@ public class AddCartItemCommandHandlerTests
 
         _cartRepository.Verify(repository => repository.UpdateAsync(cart, It.IsAny<CancellationToken>()), Times.Once);
         _cartRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _cartCache.Verify(cache => cache.RemoveAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private AddCartItemCommandHandler CreateHandler() =>
-        new(_cartRepository.Object, _authenticationContext.Object);
+        new(_cartRepository.Object, _cartCache.Object, _authenticationContext.Object);
 }

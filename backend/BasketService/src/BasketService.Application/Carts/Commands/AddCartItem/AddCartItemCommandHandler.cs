@@ -9,11 +9,13 @@ namespace BasketService.Application.Carts.Commands.AddCartItem;
 public sealed class AddCartItemCommandHandler : ICommandHandler<AddCartItemCommand, Result<CartResponse>>
 {
     private readonly ICartRepository _cartRepository;
+    private readonly ICartCache _cartCache;
     private readonly IAuthenticationContext _authenticationContext;
 
-    public AddCartItemCommandHandler(ICartRepository cartRepository, IAuthenticationContext authenticationContext)
+    public AddCartItemCommandHandler(ICartRepository cartRepository, ICartCache cartCache, IAuthenticationContext authenticationContext)
     {
         _cartRepository = cartRepository;
+        _cartCache = cartCache;
         _authenticationContext = authenticationContext;
     }
 
@@ -33,6 +35,7 @@ public sealed class AddCartItemCommandHandler : ICommandHandler<AddCartItemComma
         cart.AddItem(command.ProductId, command.ProductName, command.UnitPrice, command.Quantity, command.ImageUrl);
         await _cartRepository.UpdateAsync(cart, cancellationToken);
         await _cartRepository.SaveChangesAsync(cancellationToken);
+        await _cartCache.RemoveAsync(userId, cancellationToken);
 
         return new CartResponse(cart);
     }

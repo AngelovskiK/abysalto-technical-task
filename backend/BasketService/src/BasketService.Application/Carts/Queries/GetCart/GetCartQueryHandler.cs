@@ -9,11 +9,13 @@ namespace BasketService.Application.Carts.Queries.GetCart;
 public sealed class GetCartQueryHandler : IQueryHandler<GetCartQuery, Result<CartResponse>>
 {
     private readonly ICartRepository _cartRepository;
+    private readonly ICartCache _cartCache;
     private readonly IAuthenticationContext _authenticationContext;
 
-    public GetCartQueryHandler(ICartRepository cartRepository, IAuthenticationContext authenticationContext)
+    public GetCartQueryHandler(ICartRepository cartRepository, ICartCache cartCache, IAuthenticationContext authenticationContext)
     {
         _cartRepository = cartRepository;
+        _cartCache = cartCache;
         _authenticationContext = authenticationContext;
     }
 
@@ -24,12 +26,20 @@ public sealed class GetCartQueryHandler : IQueryHandler<GetCartQuery, Result<Car
             return Result<CartResponse>.Fail(new UnauthorizedError());
         }
 
+        var cachedCart = await _cartCache.GetAsync<CartResponse>(userId, cancellationToken);
+        if (cachedCart is not null)
+        {
+            return cachedCart;
+        }
+
         var cart = await _cartRepository.GetByUserIdAsync(userId, cancellationToken);
         if (cart is null)
         {
             return Result<CartResponse>.Fail(new NotFoundError("Cart", userId.ToString()));
         }
 
-        return new CartResponse(cart);
+        var response = new CartResponse(cart);
+        await _cartCache.SetAsync(userId, response, cancellationToken);
+        return response;
     }
 }

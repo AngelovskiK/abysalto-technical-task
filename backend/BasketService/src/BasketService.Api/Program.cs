@@ -2,20 +2,21 @@ using BasketService.Api.Middleware;
 using BasketService.Application.Abstractions;
 using BasketService.Application.Behaviors;
 using BasketService.Persistence;
+using BasketService.Persistence.Caching;
 using BasketService.Persistence.Repositories;
 using FluentValidation;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ── OpenAPI & Scalar ───────────────────────────────────────────────────────
 builder.Services.AddOpenApi();
-
-// ── Health Checks ──────────────────────────────────────────────────────────
-builder.Services.AddHealthChecks();
 
 // ── OpenTelemetry ─────────────────────────────────────────────────────────
 builder.Services.AddOpenTelemetry()
@@ -38,6 +39,17 @@ var connectionString = builder.Configuration.GetConnectionString("BasketDb")
 builder.Services.AddDbContext<BasketDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
+
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+var redisOptions = ConfigurationOptions.Parse(redisConnectionString);
+redisOptions.AbortOnConnectFail = false;
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisOptions));
+builder.Services.AddScoped<ICartCache, RedisCartCache>();
+
+builder.Services
+    .AddHealthChecks()
+    .AddDbContextCheck<BasketDbContext>(name: "database", tags: ["ready"])
+    .AddRedis(redisConnectionString, name: "redis", tags: ["ready"]);
 
 // ── Repositories ──────────────────────────────────────────────────────────
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -80,8 +92,12 @@ app.UseMiddleware<JwtAuthenticationMiddleware>();
 app.UseAuthorization();
 
 // ── Health Check Endpoints ─────────────────────────────────────────────────
-app.MapHealthChecks("/health/live");     // Liveness probe
-app.MapHealthChecks("/health/ready");    // Readiness probe
+app.MapHealthChecks("/health/live");     // Liveness probe — no dependency checks
+app.MapHealthChecks("/health/ready", new HealthCheckOptions   // Readiness — DB + Redis
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.MapControllers();
 

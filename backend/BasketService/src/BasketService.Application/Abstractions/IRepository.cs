@@ -24,3 +24,13 @@ public interface ICartRepository
     Task UpdateAsync(Cart cart, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
+
+/// <summary>
+/// Cache abstraction for cart reads.
+/// </summary>
+public interface ICartCache
+{
+    Task<T?> GetAsync<T>(Guid userId, CancellationToken cancellationToken = default) where T : class;
+    Task SetAsync<T>(Guid userId, T value, CancellationToken cancellationToken = default) where T : class;
+    Task RemoveAsync(Guid userId, CancellationToken cancellationToken = default);
+}

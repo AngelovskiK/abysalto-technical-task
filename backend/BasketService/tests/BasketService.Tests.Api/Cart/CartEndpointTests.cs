@@ -19,6 +19,7 @@ public class CartEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private const string SecretKey = "dev-secret-key-change-me-in-production";
     private readonly WebApplicationFactory<Program> _factory;
+    private readonly InMemoryCartCache _cache = new();
     private readonly InMemoryStore _store = new();
 
     public CartEndpointTests(WebApplicationFactory<Program> factory)
@@ -37,6 +38,7 @@ public class CartEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             builder.ConfigureTestServices(services =>
             {
                 services.AddSingleton(_store);
+                services.AddSingleton<ICartCache>(_cache);
                 services.AddSingleton<IUserRepository, InMemoryUserRepository>();
                 services.AddSingleton<ICartRepository, InMemoryCartRepository>();
             });
@@ -72,6 +74,7 @@ public class CartEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         _store.Users.Clear();
         _store.Carts.Clear();
+        _cache.Clear();
 
         var user = EntityUser.Create($"cart-flow-{Guid.NewGuid():N}@example.com", "Cart Flow User");
         var cart = EntityCart.Create(user.Id);
@@ -178,6 +181,33 @@ public class CartEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     {
         public List<EntityUser> Users { get; } = [];
         public List<EntityCart> Carts { get; } = [];
+    }
+
+    private sealed class InMemoryCartCache : ICartCache
+    {
+        private readonly Dictionary<Guid, object> _items = [];
+
+        public Task<T?> GetAsync<T>(Guid userId, CancellationToken cancellationToken = default) where T : class
+        {
+            return Task.FromResult(_items.TryGetValue(userId, out var value) ? value as T : null);
+        }
+
+        public Task SetAsync<T>(Guid userId, T value, CancellationToken cancellationToken = default) where T : class
+        {
+            _items[userId] = value;
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            _items.Remove(userId);
+            return Task.CompletedTask;
+        }
+
+        public void Clear()
+        {
+            _items.Clear();
+        }
     }
 
     private sealed class InMemoryUserRepository : IUserRepository
