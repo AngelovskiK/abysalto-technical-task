@@ -1,3 +1,5 @@
+using BasketService.Application.Errors;
+using BasketService.Domain.Errors;
 using BasketService.Domain.Results;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,9 +23,9 @@ public abstract class BaseApiController : ControllerBase
         {
             Result<T>.Success success => onSuccess(success.Value),
             Result<T>.Failure failure => Problem(
-                detail: failure.Message,
-                statusCode: StatusCodes.Status400BadRequest,
-                title: failure.Code),
+                detail: failure.Error.Message,
+                statusCode: GetStatusCode(failure.Error),
+                title: failure.Error.Code),
             _ => Problem("An unexpected error occurred", statusCode: StatusCodes.Status500InternalServerError)
         };
     }
@@ -40,10 +42,20 @@ public abstract class BaseApiController : ControllerBase
         {
             Result.Success => onSuccess(),
             Result.Failure failure => Problem(
-                detail: failure.Message,
-                statusCode: StatusCodes.Status400BadRequest,
-                title: failure.Code),
+                detail: failure.Error.Message,
+                statusCode: GetStatusCode(failure.Error),
+                title: failure.Error.Code),
             _ => Problem("An unexpected error occurred", statusCode: StatusCodes.Status500InternalServerError)
         };
     }
+
+    /// <summary>
+    /// Map error types to appropriate HTTP status codes.
+    /// </summary>
+    private static int GetStatusCode(ApplicationError error) =>
+        error switch
+        {
+            ValidationError => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status400BadRequest
+        };
 }

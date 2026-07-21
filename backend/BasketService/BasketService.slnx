@@ -6,6 +6,7 @@
     <Project Path="src/BasketService.Persistence/BasketService.Persistence.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/BasketService.Tests.Api/BasketService.Tests.Api.csproj" />
     <Project Path="tests/BasketService.Tests.Application/BasketService.Tests.Application.csproj" />
     <Project Path="tests/BasketService.Tests.Domain/BasketService.Tests.Domain.csproj" />
   </Folder>

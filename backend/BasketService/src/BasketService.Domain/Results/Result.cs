@@ -1,3 +1,5 @@
+using BasketService.Domain.Errors;
+
 namespace BasketService.Domain.Results;
 
 /// <summary>
@@ -7,10 +9,10 @@ namespace BasketService.Domain.Results;
 public abstract record Result
 {
     public sealed record Success : Result;
-    public sealed record Failure(string Code, string Message) : Result;
+    public sealed record Failure(ApplicationError Error) : Result;
 
     public static Result Ok() => new Success();
-    public static Result Fail(string code, string message) => new Failure(code, message);
+    public static Result Fail(ApplicationError error) => new Failure(error);
 }
 
 /// <summary>
@@ -20,21 +22,21 @@ public abstract record Result
 public abstract record Result<T>
 {
     public sealed record Success(T Value) : Result<T>;
-    public sealed record Failure(string Code, string Message) : Result<T>;
+    public sealed record Failure(ApplicationError Error) : Result<T>;
 
     public static Result<T> Ok(T value) => new Success(value);
-    public static Result<T> Fail(string code, string message) => new Failure(code, message);
+    public static Result<T> Fail(ApplicationError error) => new Failure(error);
 
     /// <summary>
     /// Execute a function based on success/failure state.
     /// </summary>
     public TResult Match<TResult>(
         Func<T, TResult> onSuccess,
-        Func<string, string, TResult> onFailure) =>
+        Func<ApplicationError, TResult> onFailure) =>
         this switch
         {
             Success s => onSuccess(s.Value),
-            Failure f => onFailure(f.Code, f.Message),
+            Failure f => onFailure(f.Error),
             _ => throw new InvalidOperationException("Unknown result type")
         };
 
@@ -43,7 +45,7 @@ public abstract record Result<T>
     /// </summary>
     public void Match(
         Action<T> onSuccess,
-        Action<string, string> onFailure)
+        Action<ApplicationError> onFailure)
     {
         switch (this)
         {
@@ -51,7 +53,7 @@ public abstract record Result<T>
                 onSuccess(s.Value);
                 break;
             case Failure f:
-                onFailure(f.Code, f.Message);
+                onFailure(f.Error);
                 break;
         }
     }

@@ -1,7 +1,9 @@
 using BasketService.Api.Middleware;
 using BasketService.Application.Abstractions;
+using BasketService.Application.Behaviors;
 using BasketService.Persistence;
 using BasketService.Persistence.Repositories;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -44,6 +46,13 @@ builder.Services.AddScoped<ICartRepository, CartRepository>();
 // ── Mediator (CQRS) ────────────────────────────────────────────────────────
 builder.Services.AddMediator(options => options.ServiceLifetime = ServiceLifetime.Scoped);
 
+// ── FluentValidation ───────────────────────────────────────────────────────
+var applicationAssembly = typeof(ValidationBehavior<,>).Assembly;
+builder.Services.AddValidatorsFromAssembly(applicationAssembly);
+
+// Register the validation pipeline behavior
+builder.Services.AddScoped(typeof(Mediator.IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
 // ── Authentication & Authorization ────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthenticationContext, HttpContextAuthenticationContext>();
@@ -77,3 +86,7 @@ app.MapHealthChecks("/health/ready");    // Readiness probe
 app.MapControllers();
 
 app.Run();
+
+public partial class Program
+{
+}
