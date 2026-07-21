@@ -1,0 +1,23 @@
+.vs
+.idea 
+
+*.suo
+*.user 
+bin
+obj 
+volume/
+
+# Frontend (React/Node.js)
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+count.txt
+.env
+.env.*
+.nitro
+.tanstack
+.wrangler
+.output
+.vinxi

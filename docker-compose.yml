@@ -1,0 +1,106 @@
+name: retail-platform
+
+services:
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: retail-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: retail
+      POSTGRES_PASSWORD: retail_dev_pw
+      POSTGRES_DB: basketdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retail -d basketdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: retail-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Azurite — Azure Blob Storage emulator ──────────────────────────────────
+  # Connection string for local code:
+  #   DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;
+  #   AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;
+  #   BlobEndpoint=http://localhost:10000/devstoreaccount1
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: retail-azurite
+    restart: unless-stopped
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --loose
+    ports:
+      - "10000:10000" # Blob
+      - "10001:10001" # Queue
+      - "10002:10002" # Table
+    volumes:
+      - azurite-data:/data
+
+  # ── .NET Aspire Dashboard — standalone OpenTelemetry UI ────────────────────
+  # Accepts OTLP traces, metrics, and logs from any service.
+  # Swap OTEL_EXPORTER_OTLP_ENDPOINT to Azure Application Insights in higher envs.
+  #
+  # UI:        http://localhost:18888
+  # OTLP gRPC: http://localhost:4317   ← set OTEL_EXPORTER_OTLP_ENDPOINT to this
+  # OTLP HTTP: http://localhost:4318
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    container_name: retail-aspire-dashboard
+    restart: unless-stopped
+    ports:
+      - "18888:18888" # Dashboard UI
+      - "4317:18889" # OTLP gRPC
+      - "4318:18890" # OTLP HTTP
+    environment:
+      DASHBOARD__OTLP__AUTHMODE: Unsecured
+      DASHBOARD__FRONTEND__AUTHMODE: Unsecured
+
+  # ── FUTURE: Azure Service Bus Emulator ─────────────────────────────────────
+  # Uncomment to enable local event-driven testing with the official emulator.
+  # Note: requires a SQL Server sidecar (~1.5 GB image) and a config JSON file
+  # at ./infra/servicebus-config.json defining namespaces, queues, and topics.
+  # See: https://github.com/Azure/azure-service-bus-emulator-installer
+  #
+  # servicebus-sql:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   container_name: retail-servicebus-sql
+  #   environment:
+  #     ACCEPT_EULA: "Y"
+  #     SA_PASSWORD: "Service_Bus_Dev_Pw1!"
+  #   ports:
+  #     - "1433:1433"
+  #
+  # servicebus-emulator:
+  #   image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+  #   container_name: retail-servicebus
+  #   ports:
+  #     - "5672:5672" # AMQP
+  #   environment:
+  #     ACCEPT_LICENSE: "Y"
+  #     SQL_SERVER: servicebus-sql
+  #     MSSQL_SA_PASSWORD: "Service_Bus_Dev_Pw1!"
+  #   volumes:
+  #     - ./infra/servicebus-config.json:/ServiceBus_Emulator/ConfigFiles/Config.json
+  #   depends_on:
+  #     - servicebus-sql
+
+volumes:
+  postgres-data:
+  redis-data:
+  azurite-data:
