@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace BasketService.Application.Users.Commands;
+namespace BasketService.Application.Users.Commands.Login;
 
 /// <summary>
 /// Validator for LoginCommand.

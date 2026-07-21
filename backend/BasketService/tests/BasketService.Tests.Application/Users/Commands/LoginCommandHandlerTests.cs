@@ -1,9 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using BasketService.Application.Abstractions;
-using BasketService.Application.Users.Commands;
+using BasketService.Application.Users.Commands.Login;
 using BasketService.Domain.Entities;
 using BasketService.Domain.Results;
-using FluentAssertions;
 using Moq;
 
 namespace BasketService.Tests.Application.Users.Commands;
@@ -31,16 +30,14 @@ public class LoginCommandHandlerTests
 
         var result = await handler.Handle(command, CancellationToken.None);
 
-        result.Should().BeOfType<Result<LoginCommandResponse>.Success>();
-
-        var success = (Result<LoginCommandResponse>.Success)result;
-        success.Value.UserId.Should().Be(existingUser.Id);
-        success.Value.Email.Should().Be(existingUser.Email);
-        success.Value.Token.Should().NotBeNullOrWhiteSpace();
+        var success = Assert.IsType<Result<LoginCommandResponse>.Success>(result);
+        Assert.Equal(existingUser.Id, success.Value.UserId);
+        Assert.Equal(existingUser.Email, success.Value.Email);
+        Assert.False(string.IsNullOrWhiteSpace(success.Value.Token));
 
         var token = new JwtSecurityTokenHandler().ReadJwtToken(success.Value.Token);
-        token.Subject.Should().Be(existingUser.Id.ToString());
-        token.Claims.Should().Contain(claim => claim.Type == JwtRegisteredClaimNames.Email && claim.Value == existingUser.Email);
+        Assert.Equal(existingUser.Id.ToString(), token.Subject);
+        Assert.Contains(token.Claims, claim => claim.Type == JwtRegisteredClaimNames.Email && claim.Value == existingUser.Email);
 
         _userRepository.Verify(repository => repository.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
         _cartRepository.Verify(repository => repository.AddAsync(It.IsAny<Cart>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -78,14 +75,12 @@ public class LoginCommandHandlerTests
 
         var result = await handler.Handle(command, CancellationToken.None);
 
-        result.Should().BeOfType<Result<LoginCommandResponse>.Success>();
-
-        var success = (Result<LoginCommandResponse>.Success)result;
-        createdUser.Should().NotBeNull();
-        createdCart.Should().NotBeNull();
-        createdCart!.UserId.Should().Be(createdUser!.Id);
-        success.Value.UserId.Should().Be(createdUser.Id);
-        success.Value.Email.Should().Be(command.Email);
+        var success = Assert.IsType<Result<LoginCommandResponse>.Success>(result);
+        Assert.NotNull(createdUser);
+        Assert.NotNull(createdCart);
+        Assert.Equal(createdUser!.Id, createdCart!.UserId);
+        Assert.Equal(createdUser.Id, success.Value.UserId);
+        Assert.Equal(command.Email, success.Value.Email);
 
         _userRepository.Verify(repository => repository.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Once);
         _cartRepository.Verify(repository => repository.AddAsync(It.IsAny<Cart>(), It.IsAny<CancellationToken>()), Times.Once);

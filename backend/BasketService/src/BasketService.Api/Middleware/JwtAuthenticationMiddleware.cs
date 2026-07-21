@@ -55,7 +55,10 @@ public class JwtAuthenticationMiddleware
         try
         {
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(SecretKey));
-            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenHandler = new JwtSecurityTokenHandler
+            {
+                MapInboundClaims = false
+            };
 
             var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
             {

@@ -1,4 +1,4 @@
-using BasketService.Application.Users.Commands;
+using BasketService.Application.Users.Commands.Login;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
 

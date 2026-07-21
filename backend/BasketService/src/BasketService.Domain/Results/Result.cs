@@ -12,6 +12,7 @@ public abstract record Result
     public sealed record Failure(ApplicationError Error) : Result;
 
     public static Result Ok() => new Success();
+
     public static Result Fail(ApplicationError error) => new Failure(error);
 }
 
@@ -27,9 +28,8 @@ public abstract record Result<T>
     public static Result<T> Ok(T value) => new Success(value);
     public static Result<T> Fail(ApplicationError error) => new Failure(error);
 
-    /// <summary>
-    /// Execute a function based on success/failure state.
-    /// </summary>
+    public static implicit operator Result<T>(T value) => Ok(value);
+
     public TResult Match<TResult>(
         Func<T, TResult> onSuccess,
         Func<ApplicationError, TResult> onFailure) =>
@@ -40,9 +40,6 @@ public abstract record Result<T>
             _ => throw new InvalidOperationException("Unknown result type")
         };
 
-    /// <summary>
-    /// Execute an action based on success/failure state.
-    /// </summary>
     public void Match(
         Action<T> onSuccess,
         Action<ApplicationError> onFailure)

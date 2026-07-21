@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace BasketService.Application.Users.Commands;
+namespace BasketService.Application.Users.Commands.Login;
 
 /// <summary>
 /// Handles login by creating or retrieving a User and issuing a JWT token.

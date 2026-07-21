@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -40,16 +39,16 @@ public class AuthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             name = string.Empty
         });
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType!.MediaType);
 
         var problem = await response.Content.ReadFromJsonAsync<HttpValidationProblem>();
 
-        problem.Should().NotBeNull();
-        problem!.Title.Should().Be("VALIDATION_ERROR");
-        problem.Status.Should().Be((int)HttpStatusCode.BadRequest);
-        problem.Detail.Should().Contain("Email: Email is required");
-        problem.Detail.Should().Contain("Name: Name is required");
+        Assert.NotNull(problem);
+        Assert.Equal("VALIDATION_ERROR", problem!.Title);
+        Assert.Equal((int)HttpStatusCode.BadRequest, problem.Status);
+        Assert.Contains("Email: Email is required", problem.Detail);
+        Assert.Contains("Name: Name is required", problem.Detail);
     }
 
     private sealed class HttpValidationProblem

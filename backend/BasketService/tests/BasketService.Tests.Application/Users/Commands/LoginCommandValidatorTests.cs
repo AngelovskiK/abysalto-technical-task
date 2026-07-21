@@ -1,5 +1,4 @@
-using BasketService.Application.Users.Commands;
-using FluentAssertions;
+using BasketService.Application.Users.Commands.Login;
 
 namespace BasketService.Tests.Application.Users.Commands;
 
@@ -18,8 +17,8 @@ public class LoginCommandValidatorTests
 
         var result = await _validator.ValidateAsync(command);
 
-        result.IsValid.Should().BeTrue();
-        result.Errors.Should().BeEmpty();
+        Assert.True(result.IsValid);
+        Assert.Empty(result.Errors);
     }
 
     [Fact]
@@ -29,9 +28,9 @@ public class LoginCommandValidatorTests
 
         var result = await _validator.ValidateAsync(command);
 
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(error => error.PropertyName == nameof(LoginCommand.Email) && error.ErrorMessage == "Email is required");
-        result.Errors.Should().ContainSingle(error => error.PropertyName == nameof(LoginCommand.Name) && error.ErrorMessage == "Name is required");
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(LoginCommand.Email) && error.ErrorMessage == "Email is required");
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(LoginCommand.Name) && error.ErrorMessage == "Name is required");
     }
 
     [Fact]
@@ -45,7 +44,7 @@ public class LoginCommandValidatorTests
 
         var result = await _validator.ValidateAsync(command);
 
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(error => error.PropertyName == nameof(LoginCommand.Email) && error.ErrorMessage == "Email must be a valid email address");
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.PropertyName == nameof(LoginCommand.Email) && error.ErrorMessage == "Email must be a valid email address");
     }
 }

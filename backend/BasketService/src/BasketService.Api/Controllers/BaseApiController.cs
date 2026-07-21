@@ -56,6 +56,8 @@ public abstract class BaseApiController : ControllerBase
         error switch
         {
             ValidationError => StatusCodes.Status400BadRequest,
+            NotFoundError => StatusCodes.Status404NotFound,
+            UnauthorizedError => StatusCodes.Status401Unauthorized,
             _ => StatusCodes.Status400BadRequest
         };
 }
