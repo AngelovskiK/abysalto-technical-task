@@ -1,5 +1,6 @@
 using BasketService.Application.Abstractions;
 using BasketService.Domain.Entities;
+using BasketService.Domain.Results;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -13,7 +14,7 @@ namespace BasketService.Application.Users.Commands;
 /// For local dev: any email is accepted.
 /// Creates a Cart for new users.
 /// </summary>
-public class LoginCommandHandler : ICommandHandler<LoginCommand, LoginCommandResponse>
+public class LoginCommandHandler : ICommandHandler<LoginCommand, Result<LoginCommandResponse>>
 {
     private const string SecretKey = "dev-secret-key-change-me-in-production";
     private readonly IUserRepository _userRepository;
@@ -25,7 +26,7 @@ public class LoginCommandHandler : ICommandHandler<LoginCommand, LoginCommandRes
         _cartRepository = cartRepository;
     }
 
-    public async ValueTask<LoginCommandResponse> Handle(LoginCommand command, CancellationToken cancellationToken)
+    public async ValueTask<Result<LoginCommandResponse>> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
         // Check if user already exists
         var user = await _userRepository.GetByEmailAsync(command.Email, cancellationToken);
@@ -45,12 +46,14 @@ public class LoginCommandHandler : ICommandHandler<LoginCommand, LoginCommandRes
 
         var token = GenerateJwtToken(user.Id, user.Email);
 
-        return new LoginCommandResponse
+        var response = new LoginCommandResponse
         {
             UserId = user.Id,
             Email = user.Email,
             Token = token
         };
+
+        return Result<LoginCommandResponse>.Ok(response);
     }
 
     private static string GenerateJwtToken(Guid userId, string email)

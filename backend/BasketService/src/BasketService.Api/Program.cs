@@ -21,6 +21,7 @@ builder.Services.AddOpenTelemetry()
     {
         tracing.AddAspNetCoreInstrumentation();
         tracing.AddHttpClientInstrumentation();
+        tracing.AddSource("Npgsql");  // Enable PostgreSQL tracing
         tracing.AddOtlpExporter();
     })
     .WithMetrics(metrics =>
@@ -60,6 +61,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// ── Global Exception Middleware ───────────────────────────────────────────
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // ── JWT Authentication Middleware ─────────────────────────────────────────
 app.UseMiddleware<JwtAuthenticationMiddleware>();
