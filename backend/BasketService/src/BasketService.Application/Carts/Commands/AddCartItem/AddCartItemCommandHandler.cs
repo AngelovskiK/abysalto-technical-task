@@ -33,7 +33,6 @@ public sealed class AddCartItemCommandHandler : ICommandHandler<AddCartItemComma
         }
 
         cart.AddItem(command.ProductId, command.ProductName, command.UnitPrice, command.Quantity, command.ImageUrl);
-        await _cartRepository.UpdateAsync(cart, cancellationToken);
         await _cartRepository.SaveChangesAsync(cancellationToken);
         await _cartCache.RemoveAsync(userId, cancellationToken);
 

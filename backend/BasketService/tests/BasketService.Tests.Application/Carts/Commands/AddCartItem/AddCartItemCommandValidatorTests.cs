@@ -1,6 +1,6 @@
 using BasketService.Application.Carts.Commands.AddCartItem;
 
-namespace BasketService.Tests.Application.Carts.Commands;
+namespace BasketService.Tests.Application.Carts.Commands.AddCartItem;
 
 public class AddCartItemCommandValidatorTests
 {

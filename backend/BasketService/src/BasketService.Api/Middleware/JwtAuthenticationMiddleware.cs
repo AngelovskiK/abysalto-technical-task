@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using BasketService.Application.Abstractions;
+using BasketService.Application.Errors;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
 namespace BasketService.Api.Middleware;
@@ -18,26 +20,59 @@ public class JwtAuthenticationMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context, IAuthenticationContext authContext)
+    public async Task InvokeAsync(HttpContext context)
     {
+        var requiresAuthentication = context.Request.Path.StartsWithSegments("/api/cart");
         var token = ExtractToken(context);
-        if (!string.IsNullOrEmpty(token))
-        {
-            var claims = ValidateAndParseClaims(token);
-            if (claims != null)
-            {
-                // Store claims in HttpContext.Items for downstream access
-                var subClaim = claims.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
-                var emailClaim = claims.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value;
 
-                if (subClaim != null)
-                    context.Items["UserId"] = subClaim;
-                if (emailClaim != null)
-                    context.Items["Email"] = emailClaim;
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            if (requiresAuthentication)
+            {
+                await WriteUnauthorizedResponseAsync(context);
+                return;
             }
+
+            await _next(context);
+            return;
+        }
+
+        var claims = ValidateAndParseClaims(token);
+        var subClaim = claims?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+        var emailClaim = claims?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value;
+
+        if (claims is null || !Guid.TryParse(subClaim, out var userId) || userId == Guid.Empty)
+        {
+            if (requiresAuthentication)
+            {
+                await WriteUnauthorizedResponseAsync(context);
+                return;
+            }
+
+            await _next(context);
+            return;
+        }
+
+        context.Items["UserId"] = userId;
+
+        if (!string.IsNullOrWhiteSpace(emailClaim))
+        {
+            context.Items["Email"] = emailClaim;
         }
 
         await _next(context);
+    }
+
+    private static Task WriteUnauthorizedResponseAsync(HttpContext context)
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+        return context.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = StatusCodes.Status401Unauthorized,
+            Title = new UnauthorizedError().Code,
+            Detail = new UnauthorizedError().Message
+        });
     }
 
     private static string? ExtractToken(HttpContext context)
@@ -99,8 +134,8 @@ public class HttpContextAuthenticationContext : IAuthenticationContext
         {
             var context = _httpContextAccessor.HttpContext;
             if (context?.Items.TryGetValue("UserId", out var userIdObj) == true &&
-                userIdObj is string userIdStr &&
-                Guid.TryParse(userIdStr, out var userId))
+                userIdObj is Guid userId &&
+                userId != Guid.Empty)
             {
                 return userId;
             }

@@ -24,7 +24,6 @@ public class CartItem
     {
         return new CartItem
         {
-            Id = Guid.NewGuid(),
             ProductId = productId,
             ProductName = productName,
             UnitPrice = unitPrice,

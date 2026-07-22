@@ -14,6 +14,7 @@ using Scalar.AspNetCore;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+const string FrontendCorsPolicy = "Frontend";
 
 // ── OpenAPI & Scalar ───────────────────────────────────────────────────────
 builder.Services.AddOpenApi();
@@ -69,6 +70,17 @@ builder.Services.AddScoped(typeof(Mediator.IPipelineBehavior<,>), typeof(Validat
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthenticationContext, HttpContextAuthenticationContext>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(FrontendCorsPolicy, policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // ── Controllers ────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 
@@ -82,6 +94,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(FrontendCorsPolicy);
 
 // ── Global Exception Middleware ───────────────────────────────────────────
 app.UseMiddleware<GlobalExceptionMiddleware>();

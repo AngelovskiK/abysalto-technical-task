@@ -32,7 +32,6 @@ public sealed class ClearCartCommandHandler : ICommandHandler<ClearCartCommand, 
         }
 
         cart.Clear();
-        await _cartRepository.UpdateAsync(cart, cancellationToken);
         await _cartRepository.SaveChangesAsync(cancellationToken);
         await _cartCache.RemoveAsync(userId, cancellationToken);
 

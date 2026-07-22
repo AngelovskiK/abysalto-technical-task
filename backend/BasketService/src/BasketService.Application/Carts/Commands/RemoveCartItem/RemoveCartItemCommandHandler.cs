@@ -39,7 +39,6 @@ public sealed class RemoveCartItemCommandHandler : ICommandHandler<RemoveCartIte
         }
 
         cart.RemoveItem(command.CartItemId);
-        await _cartRepository.UpdateAsync(cart, cancellationToken);
         await _cartRepository.SaveChangesAsync(cancellationToken);
         await _cartCache.RemoveAsync(userId, cancellationToken);
 

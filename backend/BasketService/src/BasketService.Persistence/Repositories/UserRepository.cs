@@ -70,7 +70,10 @@ public class CartRepository : ICartRepository
 
     public async Task UpdateAsync(Cart cart, CancellationToken cancellationToken = default)
     {
-        _context.Carts.Update(cart);
+        // Cart aggregates are loaded and tracked by this DbContext.
+        // Calling Update(...) on the full graph marks new CartItems as Modified
+        // and can cause DbUpdateConcurrencyException when inserting new items.
+        // SaveChangesAsync is sufficient to persist tracked changes.
         await Task.CompletedTask;
     }
 

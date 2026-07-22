@@ -38,7 +38,6 @@ public class UpdateCartItemQuantityCommandHandlerTests
         var success = Assert.IsType<Result<CartResponse>.Success>(result);
         Assert.Equal(3, success.Value.Items[0].Quantity);
         Assert.Equal(150m, success.Value.Total);
-        _cartRepository.Verify(repository => repository.UpdateAsync(cart, It.IsAny<CancellationToken>()), Times.Once);
         _cartRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         _cartCache.Verify(cache => cache.RemoveAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -64,6 +63,6 @@ public class UpdateCartItemQuantityCommandHandlerTests
 
         var failure = Assert.IsType<Result<CartResponse>.Failure>(result);
         Assert.Equal("NOT_FOUND", failure.Error.Code);
-        _cartRepository.Verify(repository => repository.UpdateAsync(It.IsAny<Cart>(), It.IsAny<CancellationToken>()), Times.Never);
+        _cartRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 }

@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    color: #0f172a;
+    background:
+        radial-gradient(circle at top left, rgba(247, 178, 103, 0.35), transparent 28%),
+        radial-gradient(circle at right center, rgba(31, 122, 140, 0.18), transparent 24%),
+        #f7f3eb;
+    font-family: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+#app {
+    min-height: 100vh;
+}
+
+.cart-dropdown-enter {
+    animation: cartDropdownEnter 180ms ease-out;
+}
+
+@keyframes cartDropdownEnter {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cart-dropdown-enter {
+        animation: none;
+    }
+}

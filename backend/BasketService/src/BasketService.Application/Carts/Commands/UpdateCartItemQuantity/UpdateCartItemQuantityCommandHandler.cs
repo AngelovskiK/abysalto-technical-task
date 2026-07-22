@@ -39,7 +39,6 @@ public sealed class UpdateCartItemQuantityCommandHandler : ICommandHandler<Updat
         }
 
         cart.UpdateItemQuantity(command.CartItemId, command.Quantity);
-        await _cartRepository.UpdateAsync(cart, cancellationToken);
         await _cartRepository.SaveChangesAsync(cancellationToken);
         await _cartCache.RemoveAsync(userId, cancellationToken);
 

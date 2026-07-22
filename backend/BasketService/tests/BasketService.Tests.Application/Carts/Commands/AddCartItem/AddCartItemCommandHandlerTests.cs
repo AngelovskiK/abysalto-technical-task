@@ -56,7 +56,6 @@ public class AddCartItemCommandHandlerTests
         Assert.Equal(command.Quantity, success.Value.Items[0].Quantity);
         Assert.Equal(51.00m, success.Value.Total);
 
-        _cartRepository.Verify(repository => repository.UpdateAsync(cart, It.IsAny<CancellationToken>()), Times.Once);
         _cartRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         _cartCache.Verify(cache => cache.RemoveAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
     }

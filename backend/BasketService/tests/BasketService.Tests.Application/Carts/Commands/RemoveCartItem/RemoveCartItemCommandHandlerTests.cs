@@ -40,7 +40,6 @@ public class RemoveCartItemCommandHandlerTests
         Assert.Single(success.Value.Items);
         Assert.Equal(secondProductId, success.Value.Items[0].ProductId);
         Assert.Equal(40m, success.Value.Total);
-        _cartRepository.Verify(repository => repository.UpdateAsync(cart, It.IsAny<CancellationToken>()), Times.Once);
         _cartRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         _cartCache.Verify(cache => cache.RemoveAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -65,6 +64,6 @@ public class RemoveCartItemCommandHandlerTests
 
         var failure = Assert.IsType<Result<CartResponse>.Failure>(result);
         Assert.Equal("NOT_FOUND", failure.Error.Code);
-        _cartRepository.Verify(repository => repository.UpdateAsync(It.IsAny<Cart>(), It.IsAny<CancellationToken>()), Times.Never);
+        _cartRepository.Verify(repository => repository.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 }
