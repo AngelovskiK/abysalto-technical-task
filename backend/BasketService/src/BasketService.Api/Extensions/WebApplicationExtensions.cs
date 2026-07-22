@@ -7,7 +7,7 @@ namespace BasketService.Api.Extensions;
 
 public static class WebApplicationExtensions
 {
-    public static WebApplication UseBasketApiPipeline(this WebApplication app)
+    public static WebApplication ConfigureDeveloperTools(this WebApplication app)
     {
         if (app.Environment.IsDevelopment())
         {
@@ -15,8 +15,13 @@ public static class WebApplicationExtensions
             app.MapScalarApiReference();
         }
 
+        return app;
+    }
+
+    public static WebApplication ConfigureMiddleware(this WebApplication app)
+    {
         app.UseHttpsRedirection();
-        app.UseCors(ServiceCollectionExtensions.FrontendCorsPolicy);
+        app.UseCors(IServiceCollectionExtensions.FrontendCorsPolicy);
         app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseMiddleware<JwtAuthenticationMiddleware>();
         app.UseAuthorization();
@@ -24,7 +29,7 @@ public static class WebApplicationExtensions
         return app;
     }
 
-    public static WebApplication MapBasketApiEndpoints(this WebApplication app)
+    public static WebApplication MapHealthEndpoints(this WebApplication app)
     {
         app.MapHealthChecks("/health/live");
         app.MapHealthChecks("/health/ready", new HealthCheckOptions
@@ -32,8 +37,6 @@ public static class WebApplicationExtensions
             Predicate = check => check.Tags.Contains("ready"),
             ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
         });
-
-        app.MapControllers();
 
         return app;
     }

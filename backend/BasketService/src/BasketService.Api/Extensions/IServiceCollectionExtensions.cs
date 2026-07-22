@@ -16,14 +16,18 @@ using System.Threading.RateLimiting;
 
 namespace BasketService.Api.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class IServiceCollectionExtensions
 {
     public const string FrontendCorsPolicy = "Frontend";
 
-    public static IServiceCollection AddBasketApiServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection ConfigureConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtOptions>(configuration.GetSection("JwtOptions"));
+        return services;
+    }
 
+    public static IServiceCollection ConfigureOpenApi(this IServiceCollection services)
+    {
         services.AddOpenApi(options =>
         {
             options.AddDocumentTransformer((document, _, _) =>
@@ -61,6 +65,11 @@ public static class ServiceCollectionExtensions
             });
         });
 
+        return services;
+    }
+
+    public static IServiceCollection ConfigureObservability(this IServiceCollection services)
+    {
         services.AddOpenTelemetry()
             .WithTracing(tracing =>
             {
@@ -75,6 +84,11 @@ public static class ServiceCollectionExtensions
                 metrics.AddOtlpExporter();
             });
 
+        return services;
+    }
+
+    public static IServiceCollection ConfigureData(this IServiceCollection services, IConfiguration configuration)
+    {
         var connectionString = configuration.GetConnectionString("BasketDb")
             ?? throw new InvalidOperationException("Connection string 'BasketDb' not found.");
 
@@ -92,6 +106,11 @@ public static class ServiceCollectionExtensions
             .AddDbContextCheck<BasketDbContext>(name: "database", tags: ["ready"])
             .AddRedis(redisConnectionString, name: "redis", tags: ["ready"]);
 
+        return services;
+    }
+
+    public static IServiceCollection ConfigureApplication(this IServiceCollection services)
+    {
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
 
@@ -101,6 +120,11 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssembly(applicationAssembly);
         services.AddScoped(typeof(Mediator.IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
+        return services;
+    }
+
+    public static IServiceCollection ConfigureAuthAndCors(this IServiceCollection services)
+    {
         services.AddHttpContextAccessor();
         services.AddScoped<IAuthenticationContext, HttpContextAuthenticationContext>();
 
@@ -115,6 +139,11 @@ public static class ServiceCollectionExtensions
             });
         });
 
+        return services;
+    }
+
+    public static IServiceCollection ConfigureRateLimiting(this IServiceCollection services)
+    {
         services.AddRateLimiter(options =>
         {
             options.AddFixedWindowLimiter("fixed", opt =>
@@ -125,8 +154,6 @@ public static class ServiceCollectionExtensions
                 opt.QueueLimit = 2;
             });
         });
-
-        services.AddControllers();
 
         return services;
     }
