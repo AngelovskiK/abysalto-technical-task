@@ -34,12 +34,14 @@ public class GlobalExceptionMiddleware
         context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
+        var isDevelopment = context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment();
+
         var problemDetails = new
         {
             type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
             title = "An unexpected error occurred",
             status = StatusCodes.Status500InternalServerError,
-            detail = exception.Message,
+            detail = isDevelopment ? exception.Message : "An unexpected error occurred. Please try again later.",
             instance = context.Request.Path,
             traceId = context.TraceIdentifier
         };

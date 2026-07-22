@@ -1,9 +1,11 @@
-using System.IdentityModel.Tokens.Jwt;
 using BasketService.Application.Abstractions;
+using BasketService.Application.Settings;
 using BasketService.Application.Users.Commands.Login;
 using BasketService.Domain.Entities;
 using BasketService.Domain.Results;
+using Microsoft.Extensions.Options;
 using Moq;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace BasketService.Tests.Application.Users.Commands;
 
@@ -89,5 +91,5 @@ public class LoginCommandHandlerTests
     }
 
     private LoginCommandHandler CreateHandler() =>
-        new(_userRepository.Object, _cartRepository.Object);
+        new(_userRepository.Object, _cartRepository.Object, Options.Create(new JwtOptions() { SecretKey = "dev-secret-key-change-me-in-production", Issuer = "YourIssuer", Audience = "YourAudience", ExpirationMinutes = 60 }));
 }

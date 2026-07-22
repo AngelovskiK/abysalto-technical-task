@@ -1,8 +1,9 @@
 using BasketService.Application.Abstractions;
+using BasketService.Application.Settings;
 using BasketService.Domain.Entities;
 using BasketService.Domain.Results;
 using Mediator;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,14 +17,15 @@ namespace BasketService.Application.Users.Commands.Login;
 /// </summary>
 public class LoginCommandHandler : ICommandHandler<LoginCommand, Result<LoginCommandResponse>>
 {
-    private const string SecretKey = "dev-secret-key-change-me-in-production";
     private readonly IUserRepository _userRepository;
     private readonly ICartRepository _cartRepository;
+    private readonly IOptions<JwtOptions> _jwtOptions;
 
-    public LoginCommandHandler(IUserRepository userRepository, ICartRepository cartRepository)
+    public LoginCommandHandler(IUserRepository userRepository, ICartRepository cartRepository, IOptions<JwtOptions> jwtOptions)
     {
         _userRepository = userRepository;
         _cartRepository = cartRepository;
+        _jwtOptions = jwtOptions;
     }
 
     public async ValueTask<Result<LoginCommandResponse>> Handle(LoginCommand command, CancellationToken cancellationToken)
@@ -56,9 +58,9 @@ public class LoginCommandHandler : ICommandHandler<LoginCommand, Result<LoginCom
         return Result<LoginCommandResponse>.Ok(response);
     }
 
-    private static string GenerateJwtToken(Guid userId, string email)
+    private string GenerateJwtToken(Guid userId, string email)
     {
-        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(SecretKey));
+        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_jwtOptions.Value.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
@@ -69,10 +71,10 @@ public class LoginCommandHandler : ICommandHandler<LoginCommand, Result<LoginCom
         };
 
         var token = new JwtSecurityToken(
-            issuer: "basket-api",
-            audience: "basket-api-client",
+            issuer: _jwtOptions.Value.Issuer,
+            audience: _jwtOptions.Value.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            expires: DateTime.UtcNow.AddMinutes(_jwtOptions.Value.ExpirationMinutes),
             signingCredentials: credentials
         );
 

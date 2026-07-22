@@ -1,6 +1,7 @@
 using BasketService.Application.Users.Commands.Login;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace BasketService.Api.Controllers;
 
@@ -23,9 +24,10 @@ public class AuthController : BaseApiController
     /// <param name="command">Email and Name</param>
     /// <returns>User ID and JWT token on success</returns>
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginCommand command)
+    [EnableRateLimiting("fixed")]
+    public async Task<IActionResult> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(command);
+        var result = await _mediator.Send(command, cancellationToken);
         return HandleResult(result, Ok);
     }
 }

@@ -1,9 +1,11 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using BasketService.Application.Abstractions;
 using BasketService.Application.Errors;
+using BasketService.Application.Settings;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace BasketService.Api.Middleware;
 
@@ -12,7 +14,6 @@ namespace BasketService.Api.Middleware;
 /// </summary>
 public class JwtAuthenticationMiddleware
 {
-    private const string SecretKey = "dev-secret-key-change-me-in-production";
     private readonly RequestDelegate _next;
 
     public JwtAuthenticationMiddleware(RequestDelegate next)
@@ -24,6 +25,7 @@ public class JwtAuthenticationMiddleware
     {
         var requiresAuthentication = context.Request.Path.StartsWithSegments("/api/cart");
         var token = ExtractToken(context);
+        var jwtOptions = context.RequestServices.GetRequiredService<IOptions<JwtOptions>>().Value;
 
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -37,7 +39,7 @@ public class JwtAuthenticationMiddleware
             return;
         }
 
-        var claims = ValidateAndParseClaims(token);
+        var claims = ValidateAndParseClaims(token, jwtOptions);
         var subClaim = claims?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
         var emailClaim = claims?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email)?.Value;
 
@@ -85,11 +87,11 @@ public class JwtAuthenticationMiddleware
         return null;
     }
 
-    private static ClaimsPrincipal? ValidateAndParseClaims(string token)
+    private ClaimsPrincipal? ValidateAndParseClaims(string token, JwtOptions jwtOptions)
     {
         try
         {
-            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(SecretKey));
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtOptions.SecretKey));
             var tokenHandler = new JwtSecurityTokenHandler
             {
                 MapInboundClaims = false
@@ -100,9 +102,9 @@ public class JwtAuthenticationMiddleware
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = key,
                 ValidateIssuer = true,
-                ValidIssuer = "basket-api",
+                ValidIssuer = jwtOptions.Issuer,
                 ValidateAudience = true,
-                ValidAudience = "basket-api-client",
+                ValidAudience = jwtOptions.Audience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out SecurityToken validatedToken);

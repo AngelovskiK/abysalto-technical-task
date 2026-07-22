@@ -1,8 +1,3 @@
-using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using BasketService.Application.Abstractions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -10,6 +5,11 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Claims;
 using EntityCart = BasketService.Domain.Entities.Cart;
 using EntityUser = BasketService.Domain.Entities.User;
 
@@ -17,7 +17,8 @@ namespace BasketService.Tests.Api.Cart;
 
 public class CartEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
-    private const string SecretKey = "dev-secret-key-change-me-in-production";
+    private const string jwtSecretKey = "test-secret-key-at-least-256-bits-long-1234567890";
+
     private readonly WebApplicationFactory<Program> _factory;
     private readonly InMemoryCartCache _cache = new();
     private readonly InMemoryStore _store = new();
@@ -31,7 +32,11 @@ public class CartEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             {
                 configuration.AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    ["ConnectionStrings:BasketDb"] = "Host=localhost;Port=5432;Database=basketdb;Username=retail;Password=retail_dev_pw"
+                    ["ConnectionStrings:BasketDb"] = "Host=localhost;Port=5432;Database=basketdb;Username=retail;Password=retail_dev_pw",
+                    ["JwtOptions:SecretKey"] = jwtSecretKey,
+                    ["JwtOptions:Issuer"] = "basket-api",
+                    ["JwtOptions:Audience"] = "basket-api-client",
+                    ["JwtOptions:ExpirationMinutes"] = "60"
                 });
             });
 
@@ -131,7 +136,7 @@ public class CartEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
     private static string GenerateJwtToken(Guid userId, string email)
     {
-        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(SecretKey));
+        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
@@ -273,6 +278,14 @@ public class CartEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         public Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
+            foreach (var cart in _store.Carts)
+            {
+                foreach (var item in cart.Items.Where(item => item.Id == Guid.Empty))
+                {
+                    item.Id = Guid.NewGuid();
+                }
+            }
+
             return Task.CompletedTask;
         }
     }
