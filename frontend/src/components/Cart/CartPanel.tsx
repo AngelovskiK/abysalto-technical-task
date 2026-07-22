@@ -7,6 +7,7 @@ interface CartPanelProps {
     isLoading: boolean
     errorMessage: string | null
     isMutating: boolean
+    isClearing: boolean
     onAddDemoItem: () => void
     onIncrease: (item: CartItem) => void
     onDecrease: (item: CartItem) => void
@@ -27,6 +28,7 @@ export function CartPanel({
     isAuthenticated,
     isLoading,
     isMutating,
+    isClearing,
     onAddDemoItem,
     onClear,
     onDecrease,
@@ -99,7 +101,7 @@ export function CartPanel({
                                         <Button
                                             variant="ghost"
                                             className="rounded-full px-3 py-2 text-white hover:bg-white/10"
-                                            disabled={isMutating || item.quantity <= 1}
+                                            disabled={isMutating}
                                             onClick={() => onDecrease(item)}
                                         >
                                             -
@@ -129,7 +131,7 @@ export function CartPanel({
                             <p className="text-lg font-semibold">Order total</p>
                             <p className="text-2xl font-semibold">{formatMoney(cart?.total ?? 0)}</p>
                         </div>
-                        <Button className="mt-4 w-full" isLoading={isMutating} onClick={onClear} variant="primary">
+                        <Button className="mt-4 w-full" isLoading={isClearing} onClick={onClear} variant="primary">
                             Clear Cart
                         </Button>
                     </div>

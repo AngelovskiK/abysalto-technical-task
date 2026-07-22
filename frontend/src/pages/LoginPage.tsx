@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '../components/Common/Button'
+import { RouteSkeleton } from '../components/Common/RouteSkeleton'
 import { useCartExperience } from '../hooks/useCartExperience'
 
 interface LoginLocationState {
@@ -19,6 +20,10 @@ export function LoginPage() {
             navigate(targetPath, { replace: true })
         }
     }, [cartExperience.session, navigate, targetPath])
+
+    if (cartExperience.authLoading) {
+        return <RouteSkeleton blocks={2} />
+    }
 
     return (
         <main className="mx-auto w-full max-w-xl flex-1">

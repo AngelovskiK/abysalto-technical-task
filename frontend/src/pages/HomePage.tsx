@@ -1,11 +1,16 @@
 import { Link } from 'react-router-dom'
 import { Button } from '../components/Common/Button'
+import { RouteSkeleton } from '../components/Common/RouteSkeleton'
 import { ProductList } from '../components/Product/ProductList'
 import { useCartExperience } from '../hooks/useCartExperience'
 import { products } from '../services/catalog'
 
 export function HomePage() {
     const cartExperience = useCartExperience()
+
+    if (cartExperience.authLoading) {
+        return <RouteSkeleton blocks={3} />
+    }
 
     return (
         <>

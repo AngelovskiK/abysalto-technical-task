@@ -5,6 +5,7 @@ import { authSessionStorageKey, readStoredAuthSession } from '../services/authSe
 
 interface AuthContextValue {
     session: AuthSession | null
+    isLoading: boolean
     signIn: (response: LoginResponse, name?: string) => void
     signOut: () => void
 }
@@ -13,15 +14,18 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: PropsWithChildren) {
     const [session, setSession] = useState<AuthSession | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
         const storedSession = readStoredAuthSession()
         if (!storedSession) {
             window.localStorage.removeItem(authSessionStorageKey)
+            setIsLoading(false)
             return
         }
 
         setSession(storedSession)
+        setIsLoading(false)
     }, [])
 
     const signIn = (response: LoginResponse, name = response.email.split('@')[0]) => {
@@ -45,7 +49,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         window.localStorage.removeItem(authSessionStorageKey)
     }
 
-    return <AuthContext.Provider value={{ session, signIn, signOut }}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={{ session, isLoading, signIn, signOut }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

@@ -1,9 +1,14 @@
 import { CartPanel } from '../components/Cart/CartPanel'
+import { RouteSkeleton } from '../components/Common/RouteSkeleton'
 import { useCartExperience } from '../hooks/useCartExperience'
 import { products } from '../services/catalog'
 
 export function CartPage() {
     const cartExperience = useCartExperience()
+
+    if (cartExperience.authLoading) {
+        return <RouteSkeleton blocks={2} />
+    }
 
     return (
         <main className="grid flex-1 gap-6 lg:grid-cols-[0.85fr_1.15fr]">
@@ -32,6 +37,7 @@ export function CartPage() {
                 onRemove={cartExperience.remove}
                 onClear={cartExperience.clear}
                 isMutating={cartExperience.isMutating}
+                isClearing={cartExperience.isClearing}
             />
         </main>
     )
