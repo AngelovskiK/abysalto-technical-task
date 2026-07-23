@@ -64,12 +64,12 @@ This starts PostgreSQL, Redis, Azurite, and the Aspire Dashboard (OpenTelemetry 
 ### Run the API
 
 ```bash
-cd BasketService/src/BasketService.Api
+cd backend/BasketService/src/BasketService.Api
 dotnet run
 ```
 
-API: https://localhost:5001  
-Scalar docs: https://localhost:5001/scalar
+API: https://localhost:7054  
+Scalar docs: https://localhost:7054/scalar
 
 ### Connection strings (Development)
 
@@ -88,18 +88,18 @@ Set in `BasketService.Api/appsettings.Development.json` or via environment varia
 ```bash
 # Create a new migration (run from repo root)
 dotnet ef migrations add <MigrationName> \
-  --project BasketService/src/BasketService.Persistence \
-  --startup-project BasketService/src/BasketService.Api
+  --project backend/BasketService/src/BasketService.Persistence \
+  --startup-project backend/BasketService/src/BasketService.Api
 
 # Apply migrations
 dotnet ef database update \
-  --project BasketService/src/BasketService.Persistence \
-  --startup-project BasketService/src/BasketService.Api
+  --project backend/BasketService/src/BasketService.Persistence \
+  --startup-project backend/BasketService/src/BasketService.Api
 ```
 
 ### Run tests
 
 ```bash
-cd BasketService
+cd backend/BasketService
 dotnet test
 ```
